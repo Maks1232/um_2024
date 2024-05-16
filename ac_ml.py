@@ -251,7 +251,7 @@ df = import_dataset("dataset/yeast-0-2-5-7-9_vs_3-6-8/yeast-0-2-5-7-9_vs_3-6-8.d
 X2 = np.array(df.iloc[:, :-1])
 y2 = np.array(df.iloc[:, -1])
 
-with open("r1.txt", "w") as f:
+with open("result.txt", "w") as f:
     print("Synthetic data", file=f)
     metrics_for_synth_data = calculate_metrics(X1, y1)
     # print_metrics_for_3dim_npArray(metrics_for_synth_data)
