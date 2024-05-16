@@ -8,7 +8,7 @@ from time import time
 from sklearn.model_selection import train_test_split, RepeatedKFold
 from sklearn.linear_model import LogisticRegression
 from tabulate import tabulate
-from ac_ml import print_metrics_for_npArray, calculate_metrics, calc_mean_metrics, plots_for_feture0and1
+from func import print_metrics_for_npArray, calc_mean_metrics, plots_for_feture0and1
 
 # # Set printoptions to max_size
 # import sys
@@ -83,7 +83,7 @@ def import_dataset(file_path):
     return df
 
 
-def grid_search_scratch(xtrain, ytrain):
+def grid_search_scratch(xtrain, ytrain, xtest, ytest):
 
     # Weight vector [1, 1, 1, ...,1]
     weights = np.ones(len(xtrain))
@@ -96,26 +96,26 @@ def grid_search_scratch(xtrain, ytrain):
         # print("Sample {}/{} tuning time start: {}".format(i, len(X_train), t1))
 
         # Iteration with step 0.25
-        for weight in np.arange(0.1, 1.1, 0.1):
+        for weight in np.arange(0.1, 1.1, 0.25):
 
             # Model initialization
-            # model = SVC(probability=True)
-            model = LogisticRegression()
+            model = SVC(probability=True)
+            # model = LogisticRegression()
 
             # Fit
             model.fit(xtrain, ytrain, sample_weight=weights)
 
             # Predication & Metric calculation
             # y_pred_proba = model.predict_proba(X_train)[:, 1]
-            y_pred = model.predict(xtrain)
-            score = roc_auc_score(ytrain, y_pred)
+            pred = model.predict(xtest)
+            score = f1_score(ytest, pred)
 
             # Score comparison
             if score > best_score:
                 best_score = score
                 weights[i] = weight
 
-        if i % 10 == 0:
+        if i % 50 == 0:
             t2 = time()
             print("Sample {}/{} tuning time end: {}".format(i, len(xtrain), t2))
             print("Diff: {}".format(t2 - t1))
@@ -130,7 +130,7 @@ seed = 135
 
 # Generation imbalanced, synthetic dataset
 X, y = make_classification(
-    n_samples=100,
+    n_samples=500,
     weights=[0.9, 0.1],
     n_classes=2,
     n_features=2,
@@ -141,21 +141,12 @@ X, y = make_classification(
     random_state=seed,
 )
 
-# # Train test split
-# X_train, X_test, y_train, y_test = train_test_split(
-#     X, y, test_size=0.33, random_state=seed
-# )
-
-# # Gradient descend
-# # Grid-search
-# test_weights = gradient_descent(X_test, y_test)
-# grid_test_weights = grid_search_scratch(X_test, y_test)
-
 # ---------------------------------------------------------------------------------------------
 n_splits = 2
 n_repeats = 5
 rkf = RepeatedKFold(n_splits=n_splits, n_repeats=n_repeats, random_state=10)
 results = np.zeros(shape=[4, n_splits * n_repeats, 4])
+# folder_path = os.path.join(os.path.expanduser("~"), "Pictures")
 
 for i, (train_index, test_index) in enumerate(rkf.split(X, y)):
 
@@ -170,9 +161,13 @@ for i, (train_index, test_index) in enumerate(rkf.split(X, y)):
     )
 
     weighted_clf = SVC(gamma="auto")
+
     train_weights = gradient_descent(X[train_index], y[train_index])
+    test_weights = gradient_descent(X[test_index], y[test_index])
+
     weighted_clf.fit(X[train_index], y[train_index], sample_weight=train_weights)
     weighted_y_pred = weighted_clf.predict(X[test_index])
+
     results[1, i, :] = (
         f1_score(y[test_index], weighted_y_pred),
         precision_score(y[test_index], weighted_y_pred, zero_division=1),
@@ -192,7 +187,10 @@ for i, (train_index, test_index) in enumerate(rkf.split(X, y)):
     )
 
     grid_search_clf = SVC(gamma="auto")
-    train_gs_weights = grid_search_scratch(X[train_index], y[train_index])
+
+    train_gs_weights = grid_search_scratch(X[train_index], y[train_index], X[test_index], y[test_index])
+    test_gs_weights = grid_search_scratch(X[train_index], y[train_index], X[test_index], y[test_index])
+    print(test_gs_weights)
     grid_search_clf.fit(
         X[train_index], y[train_index], sample_weight=train_gs_weights
     )
@@ -203,3 +201,129 @@ for i, (train_index, test_index) in enumerate(rkf.split(X, y)):
         recall_score(y[test_index], grid_search_y_pred),
         roc_auc_score(y[test_index], grid_search_y_pred),
     )
+    if i == 1:
+        fig, ax = plt.subplots(3, 2, figsize=(16, 14))
+
+        # ax[0].scatter(X_test[:, 0], X_test[:, 1], c=y_test, cmap='bwr', marker='o', label='Test samples')
+        ax[0][0].scatter(
+            X[test_index][y[test_index] == 0][:, 0], X[test_index][y[test_index] == 0][:, 1], color="blue", label="Class 0"
+        )
+        ax[0][0].scatter(
+            X[test_index][y[test_index] == 1][:, 0], X[test_index][y[test_index] == 1][:, 1], color="red", label="Class 1"
+        )
+        ax[0][1].scatter(
+            X[test_index][:, 0],
+            X[test_index][:, 1],
+            c=test_weights,
+            cmap="inferno",
+            marker="o",
+        )
+        fig.colorbar(
+            ax[0][1].scatter(X[test_index][:, 0], X[test_index][:, 1], c=test_weights, cmap="inferno"),
+            label="Weight",
+        )
+
+        # ax[2].scatter(X_test[:, 0], X_test[:, 1], c=non_weighted_pred, cmap='coolwarm', marker='x', label='Unweighted prediction')
+        ax[1][0].scatter(
+            X[test_index][y_pred == 0][:, 0],
+            X[test_index][y_pred == 0][:, 1],
+            color="blue",
+            marker="x",
+            label="Class 0",
+        )
+        ax[1][0].scatter(
+            X[test_index][y_pred == 1][:, 0],
+            X[test_index][y_pred == 1][:, 1],
+            color="red",
+            marker="x",
+            label="Class 1",
+        )
+
+        # ax[3].scatter(X_test[:, 0], X_test[:, 1], c=weighted_pred, cmap='coolwarm', marker='x', label='Weighted prediction')
+        ax[1][1].scatter(
+            X[test_index][weighted_y_pred == 0][:, 0],
+            X[test_index][weighted_y_pred == 0][:, 1],
+            color="blue",
+            marker="x",
+            label="Class 0",
+        )
+        ax[1][1].scatter(
+            X[test_index][weighted_y_pred == 1][:, 0],
+            X[test_index][weighted_y_pred == 1][:, 1],
+            color="red",
+            marker="x",
+            label="Class 1",
+        )
+
+        ax[2][0].scatter(
+            X[test_index][grid_search_y_pred == 0][:, 0],
+            X[test_index][grid_search_y_pred == 0][:, 1],
+            color="blue",
+            marker="x",
+            label="Class 0",
+        )
+        ax[2][0].scatter(
+            X[test_index][grid_search_y_pred == 1][:, 0],
+            X[test_index][grid_search_y_pred == 1][:, 1],
+            color="red",
+            marker="x",
+            label="Class 1",
+        )
+        ax[2][1].scatter(
+            X[test_index][:, 0],
+            X[test_index][:, 1],
+            c=test_gs_weights,
+            cmap="inferno",
+            marker="o",
+        )
+        fig.colorbar(
+            ax[2][1].scatter(X[test_index][:, 0], X[test_index][:, 1], c=test_gs_weights, cmap="inferno"),
+            label="Weight",
+        )
+
+        ax[0][0].set_xlabel("Feature 1")
+        ax[0][0].set_ylabel("Feature 2")
+        ax[0][0].set_title("Unweighted data")
+        ax[0][0].legend()
+
+        ax[0][1].set_xlabel("Feature 1")
+        ax[0][1].set_ylabel("Feature 2")
+        ax[0][1].set_title("Data weights")
+        ax[0][1].legend()
+
+        ax[1][0].set_xlabel("Feature 1")
+        ax[1][0].set_ylabel("Feature 2")
+        ax[1][0].set_title("Unweighted prediction")
+        ax[1][0].legend()
+
+        ax[1][1].set_xlabel("Feature 1")
+        ax[1][1].set_ylabel("Feature 2")
+        ax[1][1].set_title("Weighted prediction")
+        ax[1][1].legend()
+
+        ax[2][0].set_xlabel("Feature 1")
+        ax[2][0].set_ylabel("Feature 2")
+        ax[2][0].set_title("Grid Weighted prediction")
+        ax[2][0].legend()
+
+        ax[2][1].set_xlabel("Feature 1")
+        ax[2][1].set_ylabel("Feature 2")
+        ax[2][1].set_title("Grid search weights")
+        ax[2][1].legend()
+
+        plt.tight_layout()
+        plt.savefig("6_plots.png")
+        plt.show()
+avg_results = np.mean(results, axis=1)
+df = pd.DataFrame(avg_results, columns=["F1", "Precision", "Recall", "Roc-Auc"])
+metric_names = ["Non-weighted", "Weighted", "Balanced", "Grid Search"]
+df.insert(0, "Mode", metric_names)
+
+# print(df)
+print(tabulate(df, headers='keys', tablefmt='grid', showindex=False))
+
+
+# weights = gradient_descent(X, y)
+# plots_for_feture0and1(X, y, weights, "Pictures/Gradient descent effect example.png")
+# weights = grid_search_scratch(X, y)
+# plots_for_feture0and1(X, y, weights, "Pictures/Grid search effect example.png")
