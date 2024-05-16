@@ -21,7 +21,7 @@ def normalize_data(data):
 
 
 # Gradient Descent wages calculation
-def gradient_descent(X, y, learning_rate=0.1, w=4):
+def gradient_descent(_X, _y, learning_rate=0.1, w=4):
     num_samples, num_features = X.shape
 
     weights = np.ones(num_features) * w  # Future initialization
@@ -29,8 +29,8 @@ def gradient_descent(X, y, learning_rate=0.1, w=4):
 
     finish = True
     while finish:
-        cost = np.dot(weights, X.T) - y  # obliczanie kosztu
-        gradient = np.dot(X.T, cost) / num_samples  # obliczanie gradientu
+        cost = np.dot(weights, _X.T) - _y  # obliczanie kosztu
+        gradient = np.dot(_X.T, cost) / num_samples  # obliczanie gradientu
         weights = weights_prew - (learning_rate * gradient)  # aktualizacja wag
         weights_prew = weights  # zachowanie aktualnych wag
         if (gradient[0] or gradient[1]) < 0.00001:
@@ -38,7 +38,7 @@ def gradient_descent(X, y, learning_rate=0.1, w=4):
 
     # sample_weights = normalize_data(np.dot(X, weights))  # obliczenie wag dla każdej próbki
     sample_weights = normalize_data(
-        np.dot(X, weights)
+        np.dot(_X, weights)
     )  # obliczenie wag dla każdej próbki
 
     return sample_weights
@@ -116,95 +116,13 @@ def import_dataset(file_path):
     return df
 
 
-def calc_mean_metrics(array):
-    rows_name = ["F1-score", "Precision", "Recall", "ROC-AUC"]
-    result = pd.DataFrame()
-    for i in range(array.shape[0]):
-        data = pd.DataFrame(array[i], columns=rows_name)
-        result = pd.concat([result, pd.DataFrame(data.mean())], axis=1)
-    result.columns = ["Non-weighted", "Weighted", "Balanced"]
-    return result
-
-
-def print_metrics_for_3dim_npArray(array):
-    if len(array) == 3:
-        coulmns_name = ["F1-score", "Precision", "Recall", "ROC-AUC"]
-        for i in range(array.shape[0]):
-            data = pd.DataFrame(array[i], columns=coulmns_name)
-            print(data)
-    else:
-        print("Array is not 3 dimensional")
-
-
-def calculate_metrics(X, y):
-    n_splits = 2
-    n_repeats = 5
-    rkf = RepeatedKFold(n_splits=n_splits, n_repeats=n_repeats, random_state=10)
-    results = np.zeros(shape=[3, n_splits * n_repeats, 4])
-
-    for i, (train_index, test_index) in enumerate(rkf.split(X, y)):
-        clf = SVC(gamma="auto")
-        clf.fit(X[train_index], y[train_index])
-        y_pred = clf.predict(X[test_index])
-        results[0, i, :] = (
-            f1_score(y[test_index], y_pred),
-            precision_score(y[test_index], y_pred, zero_division=1),
-            recall_score(y[test_index], y_pred),
-            roc_auc_score(y[test_index], y_pred),
-        )
-
-        weighted_clf = SVC(gamma="auto")
-        train_weights = gradient_descent(X[train_index], y[train_index])
-        weighted_clf.fit(X[train_index], y[train_index], sample_weight=train_weights)
-        weighted_y_pred = weighted_clf.predict(X[test_index])
-        results[1, i, :] = (
-            f1_score(y[test_index], weighted_y_pred),
-            precision_score(y[test_index], weighted_y_pred, zero_division=1),
-            recall_score(y[test_index], weighted_y_pred),
-            roc_auc_score(y[test_index], weighted_y_pred),
-        )
-
-        balanced_clf = SVC(gamma="auto", class_weight="balanced")
-        balanced_clf.fit(X[train_index], y[train_index])
-        balanced_y_pred = balanced_clf.predict(X[test_index])
-        # print(balanced_y_pred)
-        results[2, i, :] = (
-            f1_score(y[test_index], balanced_y_pred),
-            precision_score(y[test_index], balanced_y_pred, zero_division=1),
-            recall_score(y[test_index], balanced_y_pred),
-            roc_auc_score(y[test_index], balanced_y_pred),
-        )
-    return results
-
-
-# # # Gradient descent effect example
-# X, y = make_classification(n_samples=3000, weights=[0.90, 0.10], n_classes=2, n_features=2, n_redundant=0, n_informative=1, n_clusters_per_class=1, random_state=10)
-# # weights = gradient_descent(X, y)
-# # # plots_for_feture0and1(X,y, weights,"Gradient descent effect example.png")
-#
-# X1, y1 = make_classification(n_samples=1000, weights=[0.90, 0.10], n_classes=2, n_features=8, n_redundant=0, n_informative=1, n_clusters_per_class=1, random_state=10)
-# print("Synthetic data")
-# metrics_for_synth_data = calculate_metrics(X1,y1)
-# # print_metrics_for_3dim_npArray(metrics_for_synth_data)
-# print(calc_mean_metrics(metrics_for_synth_data))
-#
-# df = import_dataset('dataset/yeast-0-2-5-7-9_vs_3-6-8/yeast-0-2-5-7-9_vs_3-6-8.dat')
-# X2 = np.array(df.iloc[:,:-1])
-# y2 = np.array(df.iloc[:,-1])
-#
-# print("\nReal data")
-# metrics_for_real_data = calculate_metrics(X2,y2)
-# # print_metrics_for_3dim_npArray(metrics_for_real_data)
-# print(calc_mean_metrics(metrics_for_real_data))
-
-
-def grid_search_scratch(X_train, y_train):
+def grid_search_scratch(xtrain, ytrain):
 
     # Weight vector [1, 1, 1, ...,1]
-    weights = np.ones(len(X_train))
+    weights = np.ones(len(xtrain))
 
     # For each sample >> maximize model metric
-    for i in range(len(X_train)):
+    for i in range(len(xtrain)):
 
         best_score = -np.inf
         t1 = time()
@@ -218,12 +136,12 @@ def grid_search_scratch(X_train, y_train):
             model = LogisticRegression()
 
             # Fit
-            model.fit(X_train, y_train, sample_weight=weights)
+            model.fit(xtrain, ytrain, sample_weight=weights)
 
             # Predication & Metric calculation
             # y_pred_proba = model.predict_proba(X_train)[:, 1]
-            y_pred = model.predict(X_train)
-            score = roc_auc_score(y_train, y_pred)
+            y_pred = model.predict(xtrain)
+            score = roc_auc_score(ytrain, y_pred)
 
             # Score comparison
             if score > best_score:
@@ -232,7 +150,7 @@ def grid_search_scratch(X_train, y_train):
 
         if i % 10 == 0:
             t2 = time()
-            print("Sample {}/{} tuning time end: {}".format(i, len(X_train), t2))
+            print("Sample {}/{} tuning time end: {}".format(i, len(xtrain), t2))
             print("Diff: {}".format(t2 - t1))
 
     return weights
@@ -245,7 +163,7 @@ seed = 135
 
 # Generation imbalanced, synthetic dataset
 X, y = make_classification(
-    n_samples=1000,
+    n_samples=500,
     weights=[0.9, 0.1],
     n_classes=2,
     n_features=2,
@@ -255,7 +173,7 @@ X, y = make_classification(
     flip_y=0.1,
     random_state=seed,
 )
-# X, y = make_classification(n_samples=3000, weights=[0.90, 0.10], n_classes=2, n_features=2, n_redundant=0, n_informative=1, n_clusters_per_class=1, random_state=10)
+
 # Train test split
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.33, random_state=seed
@@ -491,4 +409,3 @@ ax[2][1].legend()
 
 plt.tight_layout()
 plt.show()
-# X, y = make_classification(n_samples=3000, weights=[0.90, 0.10], n_classes=2, n_features=2, n_redundant=0, n_informative=1, n_clusters_per_class=1, random_state=10)
