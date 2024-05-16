@@ -5,7 +5,7 @@ from sklearn.datasets import make_classification
 from sklearn.svm import SVC
 from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_score
 from time import time
-from sklearn.model_selection import train_test_split, RepeatedKFold
+from sklearn.model_selection import train_test_split, RepeatedKFold, GridSearchCV
 from sklearn.linear_model import LogisticRegression
 from tabulate import tabulate
 from func import print_metrics_for_npArray, calc_mean_metrics, plots_for_feture0and1
@@ -83,42 +83,27 @@ def import_dataset(file_path):
     return df
 
 
-def grid_search_scratch(xtrain, ytrain, xtest, ytest):
+def grid_search_scratch(xtrain, ytrain):
+    size_on_cv = int(xtrain.shape[0]*0.8)
+    weights = np.ones(size_on_cv)
+    possible_weights = [0.1, 0.5, 1.0]
+    print(ytrain.shape)
+    grid = GridSearchCV(estimator=SVC(),
+                        param_grid={},
+                        scoring='f1_weighted',
+                        cv=5,
+                        refit=True,
+                        verbose=2,
+                        n_jobs=5)
 
-    # Weight vector [1, 1, 1, ...,1]
-    weights = np.ones(len(xtrain))
-
-    # For each sample >> maximize model metric
-    for i in range(len(xtrain)):
-
-        best_score = -np.inf
-        t1 = time()
-        # print("Sample {}/{} tuning time start: {}".format(i, len(X_train), t1))
-
-        # Iteration with step 0.25
-        for weight in np.arange(0.1, 1.1, 0.25):
-
-            # Model initialization
-            model = SVC(probability=True)
-            # model = LogisticRegression()
-
-            # Fit
-            model.fit(xtrain, ytrain, sample_weight=weights)
-
-            # Predication & Metric calculation
-            # y_pred_proba = model.predict_proba(X_train)[:, 1]
-            pred = model.predict(xtest)
-            score = f1_score(ytest, pred)
-
-            # Score comparison
-            if score > best_score:
-                best_score = score
-                weights[i] = weight
-
-        if i % 50 == 0:
-            t2 = time()
-            print("Sample {}/{} tuning time end: {}".format(i, len(xtrain), t2))
-            print("Diff: {}".format(t2 - t1))
+    for i in range(size_on_cv):
+        sample_weights = np.ndarray((len(possible_weights), size_on_cv))
+        sample_weights[:] = weights
+        for j in range(len(possible_weights)):
+            sample_weights[j, i] = possible_weights[j]
+        grid.fit(xtrain, ytrain, sample_weight=sample_weights)
+        print(grid.best_params_['sample_weights'])
+        weights = grid.best_params_['sample_weights']
 
     return weights
 
@@ -130,7 +115,7 @@ seed = 135
 
 # Generation imbalanced, synthetic dataset
 X, y = make_classification(
-    n_samples=500,
+    n_samples=100,
     weights=[0.9, 0.1],
     n_classes=2,
     n_features=2,
@@ -188,8 +173,8 @@ for i, (train_index, test_index) in enumerate(rkf.split(X, y)):
 
     grid_search_clf = SVC(gamma="auto")
 
-    train_gs_weights = grid_search_scratch(X[train_index], y[train_index], X[test_index], y[test_index])
-    test_gs_weights = grid_search_scratch(X[train_index], y[train_index], X[test_index], y[test_index])
+    train_gs_weights = grid_search_scratch(X[train_index], y[train_index])
+    test_gs_weights = grid_search_scratch(X[train_index], y[train_index])
     print(test_gs_weights)
     grid_search_clf.fit(
         X[train_index], y[train_index], sample_weight=train_gs_weights
