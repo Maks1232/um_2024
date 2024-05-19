@@ -1,0 +1,13 @@
+Synthetic data
+           Non-weighted  Weighted  Balanced  Grid Search
+F1-score       0.909214  0.447238  0.908263     0.909566
+Precision      0.978152  0.479113  0.954704     0.962447
+Recall         0.849492  0.843106  0.866618     0.862808
+ROC-AUC        0.923628  0.659473  0.930851     0.929393
+
+Real data
+           Non-weighted  Weighted  Balanced  Grid Search
+F1-score       0.003922  0.128645  0.674758     0.754183
+Precision      0.950000  0.777262  0.551138     0.905811
+Recall         0.002041  0.072857  0.876898     0.653061
+ROC-AUC        0.500910  0.534883  0.898898     0.822665

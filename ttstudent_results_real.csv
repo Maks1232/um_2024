@@ -1,0 +1,39 @@
+Macierz t_statystki:
+  Non-weighted      Weighted      Balanced    Grid Search
+--------------  ------------  ------------  -------------
+  nan            -4.73034685  -32.76089329   -22.72835297
+    4.73034685  nan           -27.84228440   -20.96818995
+   32.76089329   27.84228440  nan              4.26581393
+   22.72835297   20.96818995   -4.26581393   nan
+
+Macierz p:
+  Non-weighted      Weighted      Balanced    Grid Search
+--------------  ------------  ------------  -------------
+  nan             0.00107337    0.00000000     0.00000000
+    0.00107337  nan             0.00000000     0.00000001
+    0.00000000    0.00000000  nan              0.00209316
+    0.00000000    0.00000001    0.00209316   nan
+
+Macierz przewagi (roc_auc_score):
+  Non-weighted    Weighted    Balanced    Grid Search
+--------------  ----------  ----------  -------------
+             0           0           0              0
+             1           0           0              0
+             1           1           0              1
+             1           1           0              0
+
+Istotnosc statystyczna:
+  Non-weighted    Weighted    Balanced    Grid Search
+--------------  ----------  ----------  -------------
+             0           1           1              1
+             1           0           1              1
+             1           1           0              1
+             1           1           1              0
+
+Przewaga istotna statystycznie:
+  Non-weighted    Weighted    Balanced    Grid Search
+--------------  ----------  ----------  -------------
+             0           0           0              0
+             1           0           0              0
+             1           1           0              1
+             1           1           0              0
