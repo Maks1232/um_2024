@@ -1,22 +1,13 @@
-import random
-from math import ceil
-from nltk import accuracy
-from scipy.stats import ttest_rel
-
 from scipy import stats
-from sklearn import datasets
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.datasets import make_classification
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split, RepeatedKFold, StratifiedKFold, RepeatedStratifiedKFold, \
+from sklearn.model_selection import StratifiedKFold, RepeatedStratifiedKFold, \
     GridSearchCV
 from sklearn.svm import SVC
 from sklearn import tree
 from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_score
-from time import time
-
 from tabulate import tabulate
 
 
@@ -324,9 +315,6 @@ def t_student_results(metrics, filename):
         plik.write(tabulate(istotnosc_statystyczna, headers=headers))
         plik.write("\n\nPrzewaga istotna statystycznie:\n")
         plik.write(tabulate(przewaga_istot_statyst, headers=headers))
-
-
-
 
 
 X1, y1 = make_classification(
