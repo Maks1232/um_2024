@@ -344,17 +344,16 @@ with open("result.txt", "w") as f:
 t_student_results(metrics_for_synth_data,'ttstudent_results_synthetic.csv')
 t_student_results(metrics_for_real_data,'ttstudent_results_real.csv')
 
-# X, y = make_classification(
-#     n_samples=1000,
-#     weights=[0.90, 0.10],
-#     n_classes=2,
-#     n_features=2,
-#     n_redundant=0,
-#     n_informative=1,
-#     n_clusters_per_class=1,
-#     random_state=3,
-# )
-# weights = gradient_descent(X, y)
-# plots_for_feture0and1(X, y, weights, "Pictures/Gradient descent effect example.png")
-# weights = grid_search_scratch(X, y)
-# plots_for_feture0and1(X, y, weights, "Pictures/Grid search effect example.png")
+X, y = make_classification(
+    n_samples=1000,
+    weights=[0.90, 0.10],
+    n_classes=2,
+    n_features=2,
+    n_redundant=0,
+    n_informative=1,
+    n_clusters_per_class=1,
+    random_state=3,
+)
+weights = gradient_descent(X, y)
+plots_for_feture0and1(X, y, weights, "Pictures/Gradient descent effect example.png")
+
