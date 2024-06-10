@@ -52,9 +52,6 @@ def gradient_descent(X, y, learning_rate=0.1, w=4):
     return sample_weights
 
 
-
-
-
 def plots_for_feture0and1(X_data, y_data, weights_Data, filename="Pictures\Gradient descent effect.png"):
     """
         Creating plot before and after calculating wages. It is illustrative plot only for fist two features: 1 and 2.
@@ -230,8 +227,6 @@ def grid_search(X, y, w=10):
            Founded wages
     """
     weights = np.ones(len(X)).astype(float) * w  # initialize weights
-    """ tutaj można spróbować ewentualnie losowo inicjować wagi"""
-    # weights = np.random.choice(np.arange(1, 51, 2), size=len(X))
     skf = StratifiedKFold(n_splits=3,shuffle=True, random_state=1)  # internal cross validation
     for train_index, test_index in skf.split(X, y):
         best_score = -np.inf  # initialize best metric score
